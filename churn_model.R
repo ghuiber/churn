@@ -24,24 +24,49 @@ modelBakeOff <- function(k=5) {
     dat <- data.frame(X.scaled,y=as.factor(y))
     set.seed(20140407)
     folds=sample(rep(1:k,length=nrow(dat)))
-    acc  <- matrix(NA,k,3)
+    # home of the accuracy rates
+    acc   <- matrix(NA,k,3)
+    # homes of counts for confusion matrices
+    cmsvm <- list()
+    cmrf  <- list()
+    cmknn <- list()
     # try some classifiers, as close as I can get them to sklearn defaults
     for(j in 1:k) {
         # SVM classifier
         svmfit <- svm(y~.,data=dat[folds!=j,],kernel="radial",scale=FALSE)
         svmerr <- predict(svmfit, newdata=dat[folds==j,])
         acc[j,1] <- sum(svmerr==dat[folds==j,]$y)/nrow(dat[folds==j,])
+        cmsvm[[j]] <- table(svmerr,dat[folds==j,]$y)
         # randomForest
         train  <- folds!=j
         rffit  <- randomForest(y~.,data=dat,subset=train,ntree=10)
         rferr  <- predict(rffit,dat[folds==j,])
         acc[j,2] <- sum(rferr==dat[folds==j,]$y)/nrow(dat[folds==j,])
+        cmrf[[j]] <- table(rferr,dat[folds==j,]$y)        
         # K-nearest neighbors
         knnfit <- knn(X.scaled[folds!=j,],X.scaled[folds==j,],cl=factor(y)[folds!=j],k=5)
-        acc[j,3] <- sum(knnfit==factor(y)[folds==j])/length(knnfit)        
+        acc[j,3] <- sum(knnfit==factor(y)[folds==j])/length(knnfit)
+        cmknn[[j]] <- table(knnfit,dat[folds==j,]$y)
     }
     colnames(acc) <- c('SVM','rF','KNN')
-    return(acc)
+    # now add the k tables together for full 
+    # cross-validated confusion matrices
+    cmsvm <- Reduce("+",cmsvm)
+    cmrf  <- Reduce("+",cmrf)
+    cmknn <- Reduce("+",cmknn)
+    dimnames(cmsvm)$svmerr <- paste('predicted',dimnames(cmsvm)$svmerr,sep='.')
+    dimnames(cmrf)$rferr   <- paste('predicted',dimnames(cmrf)$rferr,sep='.')
+    dimnames(cmknn)$knnfit <- paste('predicted',dimnames(cmknn)$knnfit,sep='.')
+    
+    cm <- list(cmsvm,cmrf,cmknn)
+    names(cm) <- colnames(acc)
+    return(list(acc,cm))
 }
-svmacc <- modelBakeOff()
+bakeoff <- modelBakeOff()
 
+print('')
+print('Accuracy rates')
+print(bakeoff[[1]])
+print('')
+print('Confusion matrices')
+print(bakeoff[[2]])
