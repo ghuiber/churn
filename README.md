@@ -1,3 +1,9 @@
+Predicting customer churn with R
+=====
+
+R scripts attempt to replicate sklearn functionality described [here](http://blog.yhathq.com/posts/predicting-customer-churn-with-sklearn.html)
+
+
 Predicting customer churn with sklearn
 =====
 
