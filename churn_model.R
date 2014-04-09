@@ -30,23 +30,34 @@ modelBakeOff <- function(k=5) {
     cmsvm <- list()
     cmrf  <- list()
     cmknn <- list()
+    # homes for probability tables
+    probsvm <- list()
+    probrf  <- list()
+    probknn <- list()
     # try some classifiers, as close as I can get them to sklearn defaults
     for(j in 1:k) {
         # SVM classifier
-        svmfit <- svm(y~.,data=dat[folds!=j,],kernel="radial",scale=FALSE)
+        svmfit <- svm(y~.,data=dat[folds!=j,],kernel="radial",scale=FALSE,probability=TRUE)
         svmerr <- predict(svmfit, newdata=dat[folds==j,])
+        svmprob <- predict(svmfit, newdata=dat[folds==j,], probability=TRUE)
         acc[j,1] <- sum(svmerr==dat[folds==j,]$y)/nrow(dat[folds==j,])
         cmsvm[[j]] <- table(svmerr,dat[folds==j,]$y)
+        probsvm[[j]] <- cbind(svmerr,attr(svmprob,'probabilities')[,2])
+        
         # randomForest
         train  <- folds!=j
         rffit  <- randomForest(y~.,data=dat,subset=train,ntree=10)
         rferr  <- predict(rffit,dat[folds==j,])
+        rfprob <- predict(rffit,dat[folds==j,],type='prob')
         acc[j,2] <- sum(rferr==dat[folds==j,]$y)/nrow(dat[folds==j,])
-        cmrf[[j]] <- table(rferr,dat[folds==j,]$y)        
+        cmrf[[j]] <- table(rferr,dat[folds==j,]$y)
+        probrf[[j]] <- cbind(rferr,rfprob[,2])
+        
         # K-nearest neighbors
-        knnfit <- knn(X.scaled[folds!=j,],X.scaled[folds==j,],cl=factor(y)[folds!=j],k=5)
+        knnfit <- knn(X.scaled[folds!=j,],X.scaled[folds==j,],cl=factor(y)[folds!=j],k=5,prob=TRUE)
         acc[j,3] <- sum(knnfit==factor(y)[folds==j])/length(knnfit)
         cmknn[[j]] <- table(knnfit,dat[folds==j,]$y)
+        probknn[[j]] <- cbind(knnfit,attr(knnfit,'prob'))
     }
     colnames(acc) <- c('SVM','rF','KNN')
     # now add the k tables together for full 
@@ -57,16 +68,26 @@ modelBakeOff <- function(k=5) {
     dimnames(cmsvm)$svmerr <- paste('predicted',dimnames(cmsvm)$svmerr,sep='.')
     dimnames(cmrf)$rferr   <- paste('predicted',dimnames(cmrf)$rferr,sep='.')
     dimnames(cmknn)$knnfit <- paste('predicted',dimnames(cmknn)$knnfit,sep='.')
+    # now rbind() together the k probability matrices
+    # for full cross-validated probability estimates
+    probsvm <- Reduce("rbind",probsvm)
+    probrf  <- Reduce("rbind",probrf)
+    probknn <- Reduce("rbind",probknn)    
     
     cm <- list(cmsvm,cmrf,cmknn)
+    prob <- list(probsvm,probrf,probknn)
     names(cm) <- colnames(acc)
-    return(list(acc,cm))
+    names(prob) <- colnames(acc)
+    
+    out <- list(acc,cm,prob)
+    names(out) <- c('CV Accuracy','CV Confusion Matrices','CV Probabilities')
+    return(out)
 }
 bakeoff <- modelBakeOff()
 
 print('')
-print('Accuracy rates')
+print('Cross-validated accuracy rates')
 print(bakeoff[[1]])
 print('')
-print('Confusion matrices')
+print('Cross-validated confusion matrices')
 print(bakeoff[[2]])
