@@ -94,9 +94,13 @@ print(bakeoff[[2]])
 # split data into groups corresponding to probability ranges.
 # function below takes a probability matrix (pm) as stored in
 # the third element of the list that modelBakeoff() returns.
-groupThese <- function(pm,k) {
-    ranges <- c(1:k)/k
+groupThese <- function(pm,k=10) {
+    ranges <- c(0,c(1:k)/k)
     df <- data.frame(c(1:nrow(pm)),pm)
     names(df) <- c('id','churned','prob')
+    df$group  <- NA
+    for(i in 1:k) {
+        df$group[df$prob<=ranges[i+1] & df$prob>ranges[i]] <- i
+    }
     return(df)
 }
