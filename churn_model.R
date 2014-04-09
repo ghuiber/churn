@@ -8,6 +8,8 @@ rm(list=ls(all=TRUE))
 require(e1071)        # for SVM
 require(FNN)          # for faster KNN than class::knn
 require(randomForest) # for RF
+require(data.table)
+require(ggplot2)
 
 data <- read.csv('GitHub/churn/data/churn.csv')
 
@@ -41,7 +43,7 @@ modelBakeOff <- function(k=5) {
         svmprob <- predict(svmfit, newdata=dat[folds==j,], probability=TRUE)
         acc[j,1] <- sum(svmprob==dat[folds==j,]$y)/nrow(dat[folds==j,])
         cmsvm[[j]] <- table(svmprob,dat[folds==j,]$y)
-        probsvm[[j]] <- cbind(as.logical(svmprob),attr(svmprob,'probabilities')[,2])
+        probsvm[[j]] <- cbind(as.logical(dat[folds==j,]$y),as.logical(svmprob),attr(svmprob,'probabilities')[,2])
         
         # randomForest
         train  <- folds!=j
@@ -49,13 +51,13 @@ modelBakeOff <- function(k=5) {
         rfprob <- predict(rffit,dat[folds==j,],type='prob')
         acc[j,2] <- sum((rfprob[,2]>.5)==(as.logical(dat[folds==j,]$y)))/nrow(dat[folds==j,])
         cmrf[[j]] <- table(rfprob[,2]>.5,dat[folds==j,]$y)
-        probrf[[j]] <- cbind(rfprob[,2]>.5,rfprob[,2])
+        probrf[[j]] <- cbind(as.logical(dat[folds==j,]$y),rfprob[,2]>.5,rfprob[,2])
         
         # K-nearest neighbors
         knnfit <- knn(X.scaled[folds!=j,],X.scaled[folds==j,],cl=factor(y)[folds!=j],k=5,prob=TRUE)
         acc[j,3] <- sum(knnfit==factor(y)[folds==j])/length(knnfit)
         cmknn[[j]] <- table(knnfit,dat[folds==j,]$y)
-        probknn[[j]] <- cbind(as.logical(knnfit),attr(knnfit,'prob'))
+        probknn[[j]] <- cbind(as.logical(dat[folds==j,]$y),as.logical(knnfit),attr(knnfit,'prob'))
     }
     colnames(acc) <- c('SVM','rF','KNN')
     # now add the k tables together for full 
@@ -94,13 +96,36 @@ print(bakeoff[[2]])
 # split data into groups corresponding to probability ranges.
 # function below takes a probability matrix (pm) as stored in
 # the third element of the list that modelBakeoff() returns.
+# it returns a data table that summarizes frequency counts,
+# empirical probabilities (true and predicted) within each
+# range of estimated probabilities.
 groupThese <- function(pm,k=10) {
     ranges <- c(0,c(1:k)/k)
     df <- data.frame(c(1:nrow(pm)),pm)
-    names(df) <- c('id','churned','prob')
+    names(df) <- c('id','true.churn','predicted.churn','prob')
     df$group  <- NA
     for(i in 1:k) {
         df$group[df$prob<=ranges[i+1] & df$prob>ranges[i]] <- i
     }
-    return(df)
+    dt <- data.table(df)
+    setkey(dt,group,id)
+    summary <- dt[,list(trueprobs=mean(true.churn),predprobs=mean(prob),count=.N),by=list(group)]
+    return(summary)
 }
+svmsum <- groupThese(bakeoff[[3]][['SVM']])
+rfsum  <- groupThese(bakeoff[[3]][['rF']])
+knnsum <- groupThese(bakeoff[[3]][['KNN']])
+
+# now GGplot
+theme_set(theme_gray(base_size = 18))
+psvm <- ggplot(svmsum,aes(group/10,trueprobs)) + geom_point(aes(size=count)) + 
+    geom_line(colour='red',aes(y=group/10)) + ylab('Observed churn rates') +
+    xlab('Predicted probability ranges') + scale_size_continuous(range = c(3, 8)) + 
+    ggtitle(expression(atop("SVM diagnostic plot", atop("red line is perfect prediction; bubble sizes proportional to observations in each group", ""))))
+
+prf <- ggplot(rfsum,aes(predprobs,trueprobs)) + geom_point(aes(size=count)) + 
+    geom_line(colour='red',aes(y=predprobs)) + ylab('Observed churn rates') +
+    xlab('Predicted probability ranges') + scale_size_continuous(range = c(3, 8)) + 
+    ggtitle(expression(atop("randomForest diagnostic plot", atop("red line is perfect prediction; bubble sizes proportional to observations in each group", ""))))
+
+
