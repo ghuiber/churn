@@ -206,4 +206,4 @@ You will notice that my KNN scores are both entirely out of whack. Clearly, my a
 
 I concur with Eric that SVM beats rF on calibration, and rF beats SVM on discrimination, so the jury's still out. Just by eyeballing the two pictures above, my vote would go to SVM. I don't like that S pattern in rF. However, a comparison of the confusion matrices would endorse rF clearly. Both numbers on the main diagonal are larger in rF than they are in SVM.
 
-My code is on GitHub. Fork it and let me know if you figured out how I managed to be so off on KNN. 
+My code is on [GitHub](https://github.com/ghuiber/churn/tree/Rversion). Fork it and let me know if you figured out how I managed to be so off on KNN. 
