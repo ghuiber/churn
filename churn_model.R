@@ -3,8 +3,8 @@
 # try and replicate Eric Chiang's Python code of churn model published at 
 # http://blog.yhathq.com/posts/predicting-customer-churn-with-sklearn.html
 
+## @knitr prep
 # main settings: clean up, set output options, require libraries
-rm(list=ls(all=TRUE))
 require(e1071)        # for SVM
 require(FNN)          # for faster KNN than class::knn
 require(randomForest) # for RF
@@ -21,21 +21,26 @@ X <- subset(data,select=-c(State,Area.Code,Phone,Churn.))
 X[c('Int.l.Plan','VMail.Plan')] <- X[c('Int.l.Plan','VMail.Plan')]=='yes'
 X.scaled <- scale(X)
 
+## @knitr runandcompare
 # compare 3 classifiers with k-fold cross-validation
 modelBakeOff <- function(k=5) {
     dat <- data.frame(X.scaled,y=as.factor(y))
     set.seed(20140407)
     folds=sample(rep(1:k,length=nrow(dat)))
+    
     # home of the accuracy rates
     acc   <- matrix(NA,k,3)
-    # homes of counts for confusion matrices
+    
+    # temporary homes of counts for confusion matrices
     cmsvm <- list()
     cmrf  <- list()
     cmknn <- list()
-    # homes for probability tables
+    
+    # temporary homes for probability tables
     probsvm <- list()
     probrf  <- list()
     probknn <- list()
+    
     # try some classifiers, as close as I can get them to sklearn defaults
     for(j in 1:k) {
         # SVM classifier
@@ -60,14 +65,17 @@ modelBakeOff <- function(k=5) {
         probknn[[j]] <- cbind(as.logical(dat[folds==j,]$y),as.logical(knnfit),attr(knnfit,'prob'))
     }
     colnames(acc) <- c('SVM','rF','KNN')
+    
     # now add the k tables together for full 
     # cross-validated confusion matrices
-    cmsvm <- Reduce("+",cmsvm)
-    cmrf  <- Reduce("+",cmrf)
-    cmknn <- Reduce("+",cmknn)
-    dimnames(cmsvm)[[1]] <- paste('predicted',dimnames(cmsvm)[[1]],sep='.')
-    dimnames(cmrf)[[1]]  <- paste('predicted',dimnames(cmrf)[[1]],sep='.')
-    dimnames(cmknn)[[1]] <- paste('predicted',dimnames(cmknn)[[1]],sep='.')
+    makeCM <- function(x) {
+        out <- Reduce('+',x)
+        dimnames(out)[[1]] <- paste('predicted',dimnames(out)[[1]],sep='.')
+        return(out)
+    }
+    cmsvm <- makeCM(cmsvm)
+    cmrf  <- makeCM(cmrf)
+    cmknn <- makeCM(cmknn)
     
     # now rbind() together the k probability matrices
     # for full cross-validated probability estimates
@@ -75,9 +83,9 @@ modelBakeOff <- function(k=5) {
     probrf  <- Reduce("rbind",probrf)
     probknn <- Reduce("rbind",probknn)    
     
-    cm <- list(cmsvm,cmrf,cmknn)
-    prob <- list(probsvm,probrf,probknn)
-    names(cm) <- colnames(acc)
+    cm          <- list(cmsvm,cmrf,cmknn)
+    prob        <- list(probsvm,probrf,probknn)
+    names(cm)   <- colnames(acc)
     names(prob) <- colnames(acc)
     
     out <- list(acc,cm,prob)
@@ -85,13 +93,6 @@ modelBakeOff <- function(k=5) {
     return(out)
 }
 bakeoff <- modelBakeOff()
-
-print('')
-print('Cross-validated accuracy rates')
-print(bakeoff[[1]])
-print('')
-print('Cross-validated confusion matrices')
-print(bakeoff[[2]])
 
 # OK, so now I have predicted probabilities for everybody. Let's 
 # split data into groups corresponding to probability ranges.
@@ -127,14 +128,19 @@ summarizeThese <- function(dt) {
     return(out)
 }
 
-svmprob <- groupThese(bakeoff[[3]][['SVM']])
-rfprob  <- groupThese(bakeoff[[3]][['rF']])
-knnprob <- groupThese(bakeoff[[3]][['KNN']])
+svmsum <- summarizeThese(groupThese(bakeoff[[3]][['SVM']]))
+rfsum  <- summarizeThese(groupThese(bakeoff[[3]][['rF']]))
+knnsum <- summarizeThese(groupThese(bakeoff[[3]][['KNN']]))
 
-svmsum <- summarizeThese(svmprob)
-rfsum  <- summarizeThese(rfprob)
-knnsum <- summarizeThese(knnprob)
+## @knitr diagnostics
+print('')
+print('Cross-validated accuracy rates')
+print(colMeans(bakeoff[[1]]))
+print('')
+print('Cross-validated confusion matrices')
+print(bakeoff[[2]])
 
+## @knitr pictures
 # now GGplot
 theme_set(theme_gray(base_size = 18))
 psvm <- ggplot(svmsum[[1]],aes(predprobs,trueprobs)) + geom_point(aes(size=count)) + 
@@ -147,20 +153,17 @@ prf <- ggplot(rfsum[[1]],aes(predprobs,trueprobs)) + geom_point(aes(size=count))
     xlab('Predicted probability ranges') + scale_size_continuous(range = c(3, 8)) + 
     ggtitle(expression(atop("randomForest diagnostic plot", atop("red line is perfect prediction; bubble sizes proportional to observations in each group", ""))))
 
+## @knitr cdscores
 # More diagnostics: calibration and discrimination
 print('')
 print('SVM')
-svmsum[['calibration']]
-svmsum[['discrimination']]
+print(svmsum[['calibration']])
+print(svmsum[['discrimination']])
 print('')
 print('rF')
-rfsum[['calibration']]
-rfsum[['discrimination']]
+print(rfsum[['calibration']])
+print(rfsum[['discrimination']])
 print('')
 print('KNN')
-knnsum[['calibration']]
-knnsum[['discrimination']]
-
-
-
-
+print(knnsum[['calibration']])
+print(knnsum[['discrimination']])
