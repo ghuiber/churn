@@ -118,8 +118,8 @@ knnsum <- groupThese(bakeoff[[3]][['KNN']])
 
 # now GGplot
 theme_set(theme_gray(base_size = 18))
-psvm <- ggplot(svmsum,aes(group/10,trueprobs)) + geom_point(aes(size=count)) + 
-    geom_line(colour='red',aes(y=group/10)) + ylab('Observed churn rates') +
+psvm <- ggplot(svmsum,aes(predprobs,trueprobs)) + geom_point(aes(size=count)) + 
+    geom_line(colour='red',aes(y=predprobs)) + ylab('Observed churn rates') +
     xlab('Predicted probability ranges') + scale_size_continuous(range = c(3, 8)) + 
     ggtitle(expression(atop("SVM diagnostic plot", atop("red line is perfect prediction; bubble sizes proportional to observations in each group", ""))))
 
