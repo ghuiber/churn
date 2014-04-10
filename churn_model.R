@@ -1,7 +1,7 @@
 # 20140407
 #
-# try and replicate Eric Chiang's Python code of 
-# churn model published at blog.yhathq.com
+# try and replicate Eric Chiang's Python code of churn model published at 
+# http://blog.yhathq.com/posts/predicting-customer-churn-with-sklearn.html
 
 # main settings: clean up, set output options, require libraries
 rm(list=ls(all=TRUE))
@@ -68,6 +68,7 @@ modelBakeOff <- function(k=5) {
     dimnames(cmsvm)[[1]] <- paste('predicted',dimnames(cmsvm)[[1]],sep='.')
     dimnames(cmrf)[[1]]  <- paste('predicted',dimnames(cmrf)[[1]],sep='.')
     dimnames(cmknn)[[1]] <- paste('predicted',dimnames(cmknn)[[1]],sep='.')
+    
     # now rbind() together the k probability matrices
     # for full cross-validated probability estimates
     probsvm <- Reduce("rbind",probsvm)
@@ -94,11 +95,9 @@ print(bakeoff[[2]])
 
 # OK, so now I have predicted probabilities for everybody. Let's 
 # split data into groups corresponding to probability ranges.
-# function below takes a probability matrix (pm) as stored in
+# This function takes a probability matrix (pm) as stored in
 # the third element of the list that modelBakeoff() returns.
-# it returns a data table that summarizes frequency counts,
-# empirical probabilities (true and predicted) within each
-# range of estimated probabilities.
+# this will be useful for several things later:
 groupThese <- function(pm,k=10) {
     ranges <- c(0,c(1:k)/k)
     df <- data.frame(c(1:nrow(pm)),pm)
@@ -109,23 +108,59 @@ groupThese <- function(pm,k=10) {
     }
     dt <- data.table(df)
     setkey(dt,group,id)
+    return(dt)
+}    
+
+# function below takes a data table as returned by groupThese().
+# it returns a list of three things:
+# 1. summary -- a data table that summarizes frequency counts, empirical
+#    probabilities (true and predicted) within each bin of estimated probabilities.
+# 2. cscore -- a calibration score
+# 3. dscore -- a discrimination score
+summarizeThese <- function(dt) {
     summary <- dt[,list(trueprobs=mean(true.churn),predprobs=mean(prob),count=.N),by=list(group)]
-    return(summary)
+    baseprob <- summary$predprobs %*% summary$count / sum(summary$count)
+    cscore   <- (summary$trueprobs-summary$predprobs)^2 %*% summary$count / sum(summary$count)
+    dscore   <- (summary$trueprobs-baseprob)^2 %*% summary$count / sum(summary$count)    
+    out <- list(summary,cscore,dscore)
+    names(out) <- c('summary','calibration','discrimination')
+    return(out)
 }
-svmsum <- groupThese(bakeoff[[3]][['SVM']])
-rfsum  <- groupThese(bakeoff[[3]][['rF']])
-knnsum <- groupThese(bakeoff[[3]][['KNN']])
+
+svmprob <- groupThese(bakeoff[[3]][['SVM']])
+rfprob  <- groupThese(bakeoff[[3]][['rF']])
+knnprob <- groupThese(bakeoff[[3]][['KNN']])
+
+svmsum <- summarizeThese(svmprob)
+rfsum  <- summarizeThese(rfprob)
+knnsum <- summarizeThese(knnprob)
 
 # now GGplot
 theme_set(theme_gray(base_size = 18))
-psvm <- ggplot(svmsum,aes(predprobs,trueprobs)) + geom_point(aes(size=count)) + 
+psvm <- ggplot(svmsum[[1]],aes(predprobs,trueprobs)) + geom_point(aes(size=count)) + 
     geom_line(colour='red',aes(y=predprobs)) + ylab('Observed churn rates') +
     xlab('Predicted probability ranges') + scale_size_continuous(range = c(3, 8)) + 
     ggtitle(expression(atop("SVM diagnostic plot", atop("red line is perfect prediction; bubble sizes proportional to observations in each group", ""))))
 
-prf <- ggplot(rfsum,aes(predprobs,trueprobs)) + geom_point(aes(size=count)) + 
+prf <- ggplot(rfsum[[1]],aes(predprobs,trueprobs)) + geom_point(aes(size=count)) + 
     geom_line(colour='red',aes(y=predprobs)) + ylab('Observed churn rates') +
     xlab('Predicted probability ranges') + scale_size_continuous(range = c(3, 8)) + 
     ggtitle(expression(atop("randomForest diagnostic plot", atop("red line is perfect prediction; bubble sizes proportional to observations in each group", ""))))
+
+# More diagnostics: calibration and discrimination
+print('')
+print('SVM')
+svmsum[['calibration']]
+svmsum[['discrimination']]
+print('')
+print('rF')
+rfsum[['calibration']]
+rfsum[['discrimination']]
+print('')
+print('KNN')
+knnsum[['calibration']]
+knnsum[['discrimination']]
+
+
 
 
