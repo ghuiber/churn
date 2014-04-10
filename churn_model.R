@@ -11,7 +11,7 @@ require(randomForest) # for RF
 require(data.table)
 require(ggplot2)
 
-data <- read.csv('GitHub/churn/data/churn.csv')
+data <- read.csv('data/churn.csv')
 
 # dependent variable
 y <- data$Churn.=='True.'
@@ -155,15 +155,6 @@ prf <- ggplot(rfsum[[1]],aes(predprobs,trueprobs)) + geom_point(aes(size=count))
 
 ## @knitr cdscores
 # More diagnostics: calibration and discrimination
-print('')
-print('SVM')
-print(svmsum[['calibration']])
-print(svmsum[['discrimination']])
-print('')
-print('rF')
-print(rfsum[['calibration']])
-print(rfsum[['discrimination']])
-print('')
-print('KNN')
-print(knnsum[['calibration']])
-print(knnsum[['discrimination']])
+cdscores <- matrix(c(svmsum[[2]],svmsum[[3]],rfsum[[2]],rfsum[[3]],knnsum[[2]],knnsum[[3]]),ncol=3,dimnames=list(c('Calibration','Discrimination'),c('SVM','rF','KNN')))
+print(round(cdscores,3))
+
