@@ -123,7 +123,7 @@ groupThese <- function(pm, k = 10) {
 summarizeThese <- function(dt) {
     summary <- dt[, list(trueprobs = mean(true.churn), predprobs = mean(prob), 
         count = .N), by = list(group)]
-    baseprob <- summary$predprobs %*% summary$count/sum(summary$count)
+    baseprob <- summary$trueprobs %*% summary$count/sum(summary$count)
     cscore <- (summary$trueprobs - summary$predprobs)^2 %*% summary$count/sum(summary$count)
     dscore <- (summary$trueprobs - baseprob)^2 %*% summary$count/sum(summary$count)
     out <- list(summary, cscore, dscore)
@@ -178,7 +178,7 @@ My numbers are close enough to his so far. Next, some pictures:
 ![](figure/pics1.png) ![](figure/pics2.png) 
 
 
-The calibration and discrimination scores matter because they measure how close overall your bubbles are to your red lines. Obviously, the closer the better and bubble sizes matter. The classification and discrimination scores are essentially average squared distances weighted by bubble size.
+The calibration scores measure how close overall the bubbles are to the diagonal red lines. Obviously, the closer the better and bubble sizes matter. The discrimination scores measure how far overall the bubbles are from the horizontal green lines, which just show the mean churn rate for the entire population. Here too bubble sizes matter. Both scores are essentially average squared distances weighted by bubble size.
 
 Lower calibration is better, and higher discrimination is better. There's more detail in the original post. For now, here are mine:
 
@@ -186,13 +186,13 @@ Lower calibration is better, and higher discrimination is better. There's more d
 ```
                  SVM    rF   KNN
 Calibration    0.001 0.006 0.685
-Discrimination 0.067 0.078 0.620
+Discrimination 0.067 0.078 0.029
 ```
 
 
 You will notice that my KNN scores are both entirely out of whack. Clearly, my attempt to replicate the defaults of `KNeighborsClassifier` in `sklearn.neighbors` failed miserably. But I did pretty well with the support vector classifier and the random forest, so I won't feel too bad. 
 
-I concur with Eric that SVM beats rF on calibration, and rF beats SVM on discrimination, so the jury's still out. Just by eyeballing the two pictures above, my vote would go to SVM. I don't like that S pattern in rF. However, a comparison of the confusion matrices would endorse rF clearly. Both numbers on the main diagonal are larger in rF than they are in SVM.
+I agree with Eric that SVM beats rF on calibration, but rF both beats SVM on discrimination and shows a better confusiom matrix, with both numbers on the main diagonal larger than their SVM counterparts. So, I'd favor rF. The only thing I don't like about it is that S pattern in the rF picture. If you think of the distances between the bubbles and the red diagonal as errors, you'd want them to be random. 
 
 My code is on [GitHub](https://github.com/ghuiber/churn/tree/Rversion). Fork it and let me know if you figure out how I managed to be so off on KNN. Here's my session info:
 

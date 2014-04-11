@@ -120,7 +120,7 @@ groupThese <- function(pm,k=10) {
 # 3. dscore -- a discrimination score
 summarizeThese <- function(dt) {
     summary <- dt[,list(trueprobs=mean(true.churn),predprobs=mean(prob),count=.N),by=list(group)]
-    baseprob <- summary$predprobs %*% summary$count / sum(summary$count)
+    baseprob <- summary$trueprobs %*% summary$count / sum(summary$count)
     cscore   <- (summary$trueprobs-summary$predprobs)^2 %*% summary$count / sum(summary$count)
     dscore   <- (summary$trueprobs-baseprob)^2 %*% summary$count / sum(summary$count)    
     out <- list(summary,cscore,dscore)
@@ -142,14 +142,17 @@ bakeoff[[2]]
 
 ## @knitr pictures
 # now GGplot
+baseprob <- rfsum[[1]]$trueprobs %*% rfsum[[1]]$count / sum(rfsum[[1]]$count)
 theme_set(theme_gray(base_size = 18))
 psvm <- ggplot(svmsum[[1]],aes(predprobs,trueprobs)) + geom_point(aes(size=count)) + 
-    geom_line(colour='red',aes(y=predprobs)) + ylab('Observed churn rates') +
+    geom_line(colour='darkred',aes(y=predprobs)) + ylab('Observed churn rates') +
+    geom_line(colour='darkgreen',aes(y=baseprob)) + 
     xlab('Predicted probability ranges') + scale_size_continuous(range = c(3, 8)) + 
     ggtitle(expression(atop("SVM diagnostic plot", atop("red line is perfect prediction; bubble sizes proportional to observations in each group", ""))))
 
 prf <- ggplot(rfsum[[1]],aes(predprobs,trueprobs)) + geom_point(aes(size=count)) + 
-    geom_line(colour='red',aes(y=predprobs)) + ylab('Observed churn rates') +
+    geom_line(colour='darkred',aes(y=predprobs)) + ylab('Observed churn rates') +
+    geom_line(colour='darkgreen',aes(y=baseprob)) +     
     xlab('Predicted probability ranges') + scale_size_continuous(range = c(3, 8)) + 
     ggtitle(expression(atop("randomForest diagnostic plot", atop("red line is perfect prediction; bubble sizes proportional to observations in each group", ""))))
 
