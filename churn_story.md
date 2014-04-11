@@ -13,7 +13,9 @@ I'm trying to replicate in R some models originally written in Python by Eric Ch
 
 I have 3,333 cell phone customers with some usage data, some churned, some not, and I will try to guess the best I can who churns and who doesn't. Like Eric, I will be using a support vector classifier (SVM), a random forest (rF), and a k nearest neighbor classifier (KNN), then I will compare their performance.
 
-The timing for Eric's blog post is perfect. The topic is of interest for me at work right now, and I also have the secondary goal of getting some GitHub practice, because I am scheduled to give my coworkers an introduction to our GitHub enterprise account soon. If I make it look easy, they might take to it. If it turns out to actually be easy, this time around I might take to it myself (my earlier forays into version control have failed to turn into working habits, unfortunately). This little project will be a good test case for a few common things one would do with Git: starting a local repository -- initiated or cloned -- adding and editing files, committing the changes, and then pushing them to possibly more than one remote repository. In this case, I am making the code and these notes public but I also want them available on the enterprise repository.
+The timing for Eric's blog post is perfect. The topic is of interest to me at work right now, and I also have the secondary goal of getting some GitHub practice. I am scheduled to give my coworkers an introduction to our GitHub enterprise account soon. If I make it look easy, they might take to it. If it turns out to actually be easy, this time around I might take to it myself (my earlier forays into version control have failed to turn into working habits, unfortunately). 
+
+This little project will be a good test case for a few common things one would do with Git: starting a local repository -- initiated or cloned -- adding and editing files, committing the changes, and then pushing them to possibly more than one remote repository. In this case, I am making the code and these notes public but I also want them available on the enterprise repository.
 
 So I cloned [Eric's code](https://github.com/EricChiang/churn) and got to work. My approximation of how his three models might be done in R is shown below. I define three functions for the job: `modelBakeOff()`, `groupThese()` and `summarizeThese()`. The last one does the work that Eric relegated to the `churn_measurements.py` script. You will want to see his comments and citations.
 
@@ -180,7 +182,7 @@ My numbers are close enough to his so far. Next, some pictures:
 
 The calibration scores measure how close overall the bubbles are to the diagonal red lines. Obviously, the closer the better and bubble sizes matter. The discrimination scores measure how far overall the bubbles are from the horizontal green lines, which just show the mean churn rate for the entire population. Here too bubble sizes matter. Both scores are essentially average squared distances weighted by bubble size.
 
-Lower calibration is better, and higher discrimination is better. There's more detail in the original post. For now, here are mine:
+Lower calibration is better, and higher discrimination is better. There's more detail in the original post. For now, here are my scores:
 
 
 ```
@@ -190,11 +192,11 @@ Discrimination 0.067 0.078 0.029
 ```
 
 
-You will notice that my KNN scores are both entirely out of whack. Clearly, my attempt to replicate the defaults of `KNeighborsClassifier` in `sklearn.neighbors` failed miserably. But I did pretty well with the support vector classifier and the random forest, so I won't feel too bad. 
+You will notice that my KNN calibration score is off. Clearly, my attempt to replicate the defaults of `KNeighborsClassifier` in `sklearn.neighbors` failed miserably. The documentation for `FNN::knn` says that when you call `knn()` with `prob=TRUE` the majority vote is a proxy for probability. This might work better with a larger number of neighbors considered. But I came pretty close to Eric's numbers with SVM and rF, so I won't feel too bad. 
 
-I agree with Eric that SVM beats rF on calibration, but rF both beats SVM on discrimination and shows a better confusiom matrix, with both numbers on the main diagonal larger than their SVM counterparts. So, I'd favor rF. The only thing I don't like about it is that S pattern in the rF picture. If you think of the distances between the bubbles and the red diagonal as errors, you'd want them to be random. 
+I agree with Eric that SVM beats rF on calibration, but rF both beats SVM on discrimination and shows a better confusion matrix, with both numbers on the main diagonal larger than their SVM counterparts. So, I'd favor rF. The only thing I don't like about it is that S pattern in the rF picture. If you think of the distances between the bubbles and the red diagonal as errors, you'd want them to be random. 
 
-My code is on [GitHub](https://github.com/ghuiber/churn/tree/Rversion). Fork it and let me know if you figure out how I managed to be so off on KNN. Here's my session info:
+My code is on [GitHub](https://github.com/ghuiber/churn/tree/Rversion). Fork it and let me know if you figure out what I messed up on the KNN calibration. Here's my session info:
 
 
 ```
