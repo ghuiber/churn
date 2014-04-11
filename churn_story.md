@@ -155,8 +155,8 @@ Cross-validated confusion matrices:
 $SVM
                  
 svmprob           FALSE TRUE
-  predicted.FALSE  2784  200
-  predicted.TRUE     66  283
+  predicted.FALSE  2785  203
+  predicted.TRUE     65  280
 
 $rF
                  
@@ -201,14 +201,10 @@ My code is on [GitHub](https://github.com/ghuiber/churn/tree/Rversion). Fork it 
 
 ```
 R version 3.0.3 (2014-03-06)
-Platform: x86_64-w64-mingw32/x64 (64-bit)
+Platform: x86_64-apple-darwin10.8.0 (64-bit)
 
 locale:
-[1] LC_COLLATE=English_United States.1252 
-[2] LC_CTYPE=English_United States.1252   
-[3] LC_MONETARY=English_United States.1252
-[4] LC_NUMERIC=C                          
-[5] LC_TIME=English_United States.1252    
+[1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
 
 attached base packages:
 [1] grid      stats     graphics  grDevices utils     datasets  methods  
@@ -217,14 +213,14 @@ attached base packages:
 other attached packages:
 [1] data.table_1.9.2   randomForest_4.6-7 FNN_1.1           
 [4] e1071_1.6-3        ggplot2_0.9.3.1    gridExtra_0.9.1   
-[7] knitr_1.5         
+[7] knitr_1.5          MASS_7.3-31       
 
 loaded via a namespace (and not attached):
- [1] class_7.3-9        colorspace_1.2-4   dichromat_2.0-0   
- [4] digest_0.6.4       evaluate_0.5.1     formatR_0.10      
- [7] gtable_0.1.2       labeling_0.2       MASS_7.3-30       
-[10] munsell_0.4.2      plyr_1.8.1         proto_0.3-10      
-[13] RColorBrewer_1.0-5 Rcpp_0.11.1        reshape2_1.2.2    
-[16] scales_0.2.3       stringr_0.6.2      tools_3.0.3       
+ [1] class_7.3-10       colorspace_1.2-4   dichromat_2.0-0   
+ [4] digest_0.6.4       evaluate_0.5.3     formatR_0.10      
+ [7] gtable_0.1.2       labeling_0.2       munsell_0.4.2     
+[10] plyr_1.8.1         proto_0.3-10       RColorBrewer_1.0-5
+[13] Rcpp_0.11.1        reshape2_1.2.2     scales_0.2.3      
+[16] stringr_0.6.2      tools_3.0.3       
 ```
 
