@@ -132,13 +132,13 @@ svmsum <- summarizeThese(groupThese(bakeoff[[3]][['SVM']]))
 rfsum  <- summarizeThese(groupThese(bakeoff[[3]][['rF']]))
 knnsum <- summarizeThese(groupThese(bakeoff[[3]][['KNN']]))
 
-## @knitr diagnostics
-print('')
-print('Cross-validated accuracy rates')
-print(colMeans(bakeoff[[1]]))
-print('')
-print('Cross-validated confusion matrices')
-print(bakeoff[[2]])
+## @knitr accuracy
+# Cross-validated accuracy rates
+round(colMeans(bakeoff[[1]]),3)
+
+## @knitr confusion
+# Cross-validated confusion matrices
+bakeoff[[2]]
 
 ## @knitr pictures
 # now GGplot

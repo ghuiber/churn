@@ -11,9 +11,9 @@
 
 I'm trying to replicate in R some models originally written in Python by Eric Chiang of $\hat{y}hat$ and [published on the company blog not too long ago](http://blog.yhathq.com/posts/predicting-customer-churn-with-sklearn.html).
 
-We have `nrow(X)` cell phone customers with some usage data, some churned, some not, and we'll try to guess the best we can who churns and who doesn't. We will be using a support vector classifier (SVM), a random forest (rF), and a k nearest neighbor classifier (KNN), then we will compare their performance.
+I have 3,333 cell phone customers with some usage data, some churned, some not, and I will try to guess the best I can who churns and who doesn't. Like Eric, I will be using a support vector classifier (SVM), a random forest (rF), and a k nearest neighbor classifier (KNN), then I will compare their performance.
 
-The timing for this blog post is perfect. It is of interest for me at work right now, and I also have the secondary goal of getting myself some GitHub practice, because I am scheduled to give my coworkers an introduction to our GitHub enterprise account soon. If I make it look easy, they might take to it.
+The timing for Eric's blog post is perfect. The topic is of interest for me at work right now, and I also have the secondary goal of getting some GitHub practice, because I am scheduled to give my coworkers an introduction to our GitHub enterprise account soon. If I make it look easy, they might take to it. If it turns out to actually be easy, this time around I might take to it myself (my earlier forays into version control have failed to turn into working habits, unfortunately). This little project will be a good test case for a few common things one would do with Git: starting a local repository -- initiated or cloned -- adding and editing files, committing the changes, and then pushing them to possibly more than one remote repository. In this case, I am making the code and these notes public but I also want them available on the enterprise repository.
 
 So I cloned [Eric's code](https://github.com/EricChiang/churn) and got to work. My approximation of how his three models might be done in R is shown below. I define three functions for the job: `modelBakeOff()`, `groupThese()` and `summarizeThese()`. The last one does the work that Eric relegated to the `churn_measurements.py` script. You will want to see his comments and citations.
 
@@ -137,29 +137,17 @@ knnsum <- summarizeThese(groupThese(bakeoff[[3]][["KNN"]]))
 ```
 
 
-First, Eric shows a comparison of overall accuracy rates, then some confusion matrices in colorful graph format. Mine are below (with confusion matrices in plain text, good enough for right now):
+First, Eric shows a comparison of overall accuracy rates, then some confusion matrices in colorful graph format. Mine are below -- with confusion matrices in plain text, good enough for right now.
 
-
-```
-[1] ""
-```
+Cross-validated accuracy rates:
 
 ```
-[1] "Cross-validated accuracy rates"
+  SVM    rF   KNN 
+0.920 0.944 0.892 
 ```
 
-```
-   SVM     rF    KNN 
-0.9202 0.9442 0.8923 
-```
 
-```
-[1] ""
-```
-
-```
-[1] "Cross-validated confusion matrices"
-```
+Cross-validated confusion matrices:
 
 ```
 $SVM
