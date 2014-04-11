@@ -15,7 +15,7 @@ We have `nrow(X)` cell phone customers with some usage data, some churned, some 
 
 The timing for this blog post is perfect. It is of interest for me at work right now, and I also have the secondary goal of getting myself some GitHub practice, because I am scheduled to give my coworkers an introduction to our GitHub enterprise account soon. If I make it look easy, they might take to it.
 
-So I cloned [Eric's code](https://github.com/EricChiang/churn) and got to work. My approximation of how his three models might be done in R is shown below. I define three functions for the job: `modelBakeoff()`, `groupThese()` and `summarizeThese()`. The last one does the work that Eric relegated to the `churn_measurements.py` script. You will want to see his comments and citations.
+So I cloned [Eric's code](https://github.com/EricChiang/churn) and got to work. My approximation of how his three models might be done in R is shown below. I define three functions for the job: `modelBakeOff()`, `groupThese()` and `summarizeThese()`. The last one does the work that Eric relegated to the `churn_measurements.py` script. You will want to see his comments and citations.
 
 
 
@@ -206,4 +206,35 @@ You will notice that my KNN scores are both entirely out of whack. Clearly, my a
 
 I concur with Eric that SVM beats rF on calibration, and rF beats SVM on discrimination, so the jury's still out. Just by eyeballing the two pictures above, my vote would go to SVM. I don't like that S pattern in rF. However, a comparison of the confusion matrices would endorse rF clearly. Both numbers on the main diagonal are larger in rF than they are in SVM.
 
-My code is on [GitHub](https://github.com/ghuiber/churn/tree/Rversion). Fork it and let me know if you figured out how I managed to be so off on KNN. 
+My code is on [GitHub](https://github.com/ghuiber/churn/tree/Rversion). Fork it and let me know if you figure out how I managed to be so off on KNN. Here's my session info:
+
+
+```
+R version 3.0.3 (2014-03-06)
+Platform: x86_64-w64-mingw32/x64 (64-bit)
+
+locale:
+[1] LC_COLLATE=English_United States.1252 
+[2] LC_CTYPE=English_United States.1252   
+[3] LC_MONETARY=English_United States.1252
+[4] LC_NUMERIC=C                          
+[5] LC_TIME=English_United States.1252    
+
+attached base packages:
+[1] grid      stats     graphics  grDevices utils     datasets  methods  
+[8] base     
+
+other attached packages:
+[1] data.table_1.9.2   randomForest_4.6-7 FNN_1.1           
+[4] e1071_1.6-3        ggplot2_0.9.3.1    gridExtra_0.9.1   
+[7] knitr_1.5         
+
+loaded via a namespace (and not attached):
+ [1] class_7.3-9        colorspace_1.2-4   dichromat_2.0-0   
+ [4] digest_0.6.4       evaluate_0.5.1     formatR_0.10      
+ [7] gtable_0.1.2       labeling_0.2       MASS_7.3-30       
+[10] munsell_0.4.2      plyr_1.8.1         proto_0.3-10      
+[13] RColorBrewer_1.0-5 Rcpp_0.11.1        reshape2_1.2.2    
+[16] scales_0.2.3       stringr_0.6.2      tools_3.0.3       
+```
+
